@@ -33,5 +33,14 @@ Schema of mongo-db document
     'Now spoke another one.']}}}
 ```
 
+**Deploy**
+
+The code is deployed via helm in kubernetes as a fast-api deployment. Use the code below :-
+
+```
+helm upgrade --install live-transcription spoonshot-tools/fastapi-solr --version "0.2.57"  -f values-dev.yaml
+
+```
+
 
 
