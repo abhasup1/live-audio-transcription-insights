@@ -1,29 +1,27 @@
-# README #
+# Live Transcription With Python and FastAPI
 
-This README would normally document whatever steps are necessary to get your application up and running.
+To run this project create a virtual environment by running the below commands. You can learn more about setting up a virtual environment in this [article](https://developers.deepgram.com/blog/2022/02/python-virtual-environments/). 
 
-### What is this repository for? ###
+```
+mkdir [% NAME_OF_YOUR_DIRECTORY %]
+cd [% NAME_OF_YOUR_DIRECTORY %]
+python3 -m venv venv
+source venv/bin/activate
+```
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+Make sure your virtual environment is activated and install the dependencies in the requirements.txt file inside. 
 
-### How do I get set up? ###
+```
+pip install -r requirements.txt
+```
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+Make sure you're in the directory with the **main.py** file and run the project in the development server.
 
-### Contribution guidelines ###
+```
+uvicorn main:app --reload
+```
 
-* Writing tests
-* Code review
-* Other guidelines
+Pull up a browser and go to your localhost, http://127.0.0.1:8000/.
 
-### Who do I talk to? ###
+Allow access to your microphone and start speaking. A transcript of your audio will appear in the browser. 
 
-* Repo owner or admin
-* Other community or team contact
