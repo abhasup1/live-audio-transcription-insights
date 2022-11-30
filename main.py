@@ -26,7 +26,6 @@ load_dotenv()
 
 app = FastAPI()
 meeting_url="http://www.phoneix-hackathon-meet"
-# user_name=os.environ.get("USERNAME")
 dg_client = Deepgram("ed2d63ab2b994f422a729422c073622d7a1c6b91")
 
 templates = Jinja2Templates(directory="templates")
@@ -37,7 +36,7 @@ async def process_audio(fast_socket: WebSocket):
             transcript = data['channel']['alternatives'][0]['transcript']
         
             if transcript:
-                user_name=os.environ.get("USERNAME")
+                user_name="abhas"
                 if user_name:
                     collection.update_one({
                                             '_id' : meeting_url
