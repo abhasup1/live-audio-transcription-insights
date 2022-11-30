@@ -1,0 +1,41 @@
+image:
+  repository: "spoonshotazureregistry.azurecr.io"
+  name: "spoonshot/hackathon_2022"
+  tag: "nov30_v7"
+
+scale:
+  minCount: 1
+  maxCount: 1
+replicas: 1
+extraVolumes: []
+
+extraVolumeMounts: []
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 1000Mi
+  requests:
+    cpu: 200m
+    memory: 500Mi
+
+# Liveliness probe keeps checkign if app is working
+# Readinness probe checks initially if pod has started
+probe:
+  livenessProbe:
+    httpGet:
+      path: /healthz/
+      port: http
+    periodSeconds: 5
+    initialDelaySeconds: 20
+    timeoutSeconds: 300
+  readinessProbe:
+    httpGet:
+      path: /healthz/
+      port: http
+    periodSeconds: 5
+    initialDelaySeconds: 30
+    timeoutSeconds: 300
+
+env:
+  MONGO_PASSWORD: "xxxxxxx..xxy"

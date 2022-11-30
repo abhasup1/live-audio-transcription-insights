@@ -35,10 +35,12 @@ Schema of mongo-db document
 
 **Deploy**
 
-The code is deployed via helm in kubernetes as a fast-api deployment. Use the code below :-
+The code is deployed via helm in kubernetes as a fast-api deployment. Use the code below to first build image and then deploy :-
 
 ```
-helm upgrade --install live-transcription spoonshot-tools/fastapi-solr --version "0.2.57"  -f values-dev.yaml
+1) docker build -t spoonshotazureregistry.azurecr.io/spoonshot/hackathon_2022:nov30_v7 .
+
+2) helm upgrade --install live-transcription spoonshot-tools/fastapi-solr --version "0.2.57"  -f values-dev.yaml
 
 ```
 
