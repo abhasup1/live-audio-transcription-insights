@@ -8,16 +8,38 @@
         <p id="status">Connection status will go here</p>
         <form id="form1">
             <label>User ID: <input type="text" id="userId" autocomplete="off" /></label>
+            <label>Meeting Url: <input type="text" id="meetId" autocomplete="off" /></label>
+            <button onclick="test()">Generate Insights</button>
             <button type="submit">Send</button>
+            
         </form>
-        <!-- <button id="get-access">Get access to mic</button> -->
+        
+        <!-- <form action="/testMe" method="get" id="form2">
+            <button type="submit">Generate Insights</button>
+        </form> -->
+        
         <p id="transcript"></p>
         <p id="demo"></p>
+        <p id="insights"><b>Insights info</b></p>
         
-        <script>   
+        <script>  
+            // document.querySelector("#demo1").textContent="test wrong turn"
+
+            function test(){
+                
+                var xmlHttpReq = new XMLHttpRequest();
+                var meet_id=document.getElementById("meetId").value
+                xmlHttpReq.open("GET", `http://localhost:8000/testMe?meet_id=${meet_id}`, false); 
+                xmlHttpReq.send(null);
+                document.querySelector("#insights").textContent=xmlHttpReq.responseText
+            }
+            
             form = document.getElementById('form1')
             form.addEventListener('submit', async (e) => {
+               
+
             e.preventDefault();
+
             navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
                 
             if (!MediaRecorder.isTypeSupported('audio/webm'))
@@ -28,10 +50,11 @@
             })
 
             var user_id = document.getElementById("userId").value
+            var meet_id = document.getElementById("meetId").value
             document.querySelector('#demo').textContent = user_id
             var socket=null
             if(user_id){
-                 socket = new WebSocket(`ws://localhost:8000/listen?user_id=${user_id}`)
+                 socket = new WebSocket(`ws://localhost:8000/listen?user_id=${user_id}&meet_id=${meet_id}`)
             }
             
 
@@ -70,6 +93,17 @@
             }
 
            })
+
+            
+        //    document.querySelector('#gen-insights').addEventListener('click', async (e) => { 
+        //         docment.querySelector("#demo1").textContent="wrongturn"
+        //         // let xmlHttpReq = new XMLHttpRequest();
+        //         // var meet_id=document.getElementById("meetId").value
+        //         // xmlHttpReq.open("GET", `http://localhost:8000/testMe?meet_id=${meet_id}`, false); 
+        //         // xmlHttpReq.send(null);
+        //         // docment.querySelector("#demo1").textContent=xmlHttpReq.responseText.value
+               
+        //     })
 
         })
         

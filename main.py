@@ -7,26 +7,25 @@ from dotenv import load_dotenv
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import logging
 import os
-import pymongo
-from bson.objectid import ObjectId
+# import pymongo
+# from bson.objectid import ObjectId
 
-MONGO_CONFIG = {
-    'host': "mongodb-pipelines.pipelines",
-    'port': 27017,
-    'database': "pipelines_data_v1",
-    'user': "root",
-    'password': os.environ['MONGO_PASSWORD']
-}
+# MONGO_CONFIG = {
+#     'host': "mongodb-pipelines.pipelines",
+#     'port': 27017,
+#     'database': "pipelines_data_v1",
+#     'user': "root",
+#     'password': os.environ['MONGO_PASSWORD']
+# }
 
-url = f"mongodb://{MONGO_CONFIG['user']}:{MONGO_CONFIG['password']}@{MONGO_CONFIG['host']}:{MONGO_CONFIG['port']}"
-client = pymongo.MongoClient(url)
-pipelines_db = client[MONGO_CONFIG["database"]]
-collection = pipelines_db['phoenix_conversational_intelligence']
+# url = f"mongodb://{MONGO_CONFIG['user']}:{MONGO_CONFIG['password']}@{MONGO_CONFIG['host']}:{MONGO_CONFIG['port']}"
+# client = pymongo.MongoClient(url)
+# pipelines_db = client[MONGO_CONFIG["database"]]
+# collection = pipelines_db['phoenix_conversational_intelligence']
 
 load_dotenv()
 
 app = FastAPI()
-meeting_url="http://www.phoneix-hackathon-meet"
 dg_client = Deepgram("ed2d63ab2b994f422a729422c073622d7a1c6b91")
 
 templates = Jinja2Templates(directory="templates")
@@ -35,20 +34,20 @@ logging.config.fileConfig('config/logging.conf', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 
-async def process_audio(fast_socket: WebSocket, user_id: str):
+async def process_audio(fast_socket: WebSocket, user_id: str,meet_id:str):
     async def get_transcript(data: Dict) -> None:
         if 'channel' in data:
             transcript = data['channel']['alternatives'][0]['transcript']
         
             if transcript:
                 if user_id:
-                    collection.update_one({
-                                            '_id' : meeting_url
-                                                    },{
-                                            '$push' : {f"attendees.{user_id}.transcript": transcript}  
-                                        }, True)
+                    # collection.update_one({
+                    #                         '_id' : meet_id
+                    #                                 },{
+                    #                         '$push' : {f"attendees.{user_id}.transcript": transcript}  
+                    #                     }, True)
 
-                    print(f"meeting_url:{meeting_url}",{"attendees":{f"{user_id}":{"transcript":transcript}}})
+                    print(f"meeting_url:{meet_id}",{"attendees":{f"{user_id}":{"transcript":transcript}}})
                 await fast_socket.send_text(transcript)
 
     deepgram_socket = await connect_to_deepgram(get_transcript)
@@ -72,12 +71,20 @@ def get(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
+@app.get("/testMe")
+def calc(request:Request,meet_id:str = Query(...)):
+    print(f"meeting id from insights {meet_id}")
+    return "I have executed calc"
+    # return templates.TemplateResponse("index.html", {"request": request})
+
 @app.websocket("/listen")
-async def websocket_endpoint(websocket: WebSocket,user_id:str = Query(...)):
+async def websocket_endpoint(websocket: WebSocket,
+                             user_id:str = Query(...),
+                             meet_id:str = Query(...)):
     await websocket.accept()
-    logging.info(f"user id is : {user_id}")
+    logging.info(f"user id is : {user_id} and meeting_id is {meet_id}")
     try:
-        deepgram_socket = await process_audio(websocket,user_id) 
+        deepgram_socket = await process_audio(websocket,user_id,meet_id) 
         while True:
             data = await websocket.receive_bytes()
             deepgram_socket.send(data)
