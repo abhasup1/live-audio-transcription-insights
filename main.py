@@ -87,15 +87,34 @@ async def websocket_endpoint(websocket: WebSocket,user_id:str = Query(...)):
         await websocket.close()
 
 
-@app.get("/process_meeting")
-def generate_meeting_insights(request: Request):
+@app.get("/process_meeting/")
+def generate_meeting_insights(meeting_id):
     meeting_insights = {}
 
     summarizer_tokenizer = AutoTokenizer.from_pretrained("slauw87/bart_summarisation")
     summarizer_model = AutoModelForSeq2SeqLM.from_pretrained("slauw87/bart_summarisation")
 
     f = open('config/interview_transcript_1.txt', 'r')
-    inputs = summarizer_tokenizer([f.read()], max_length=1024, return_tensors="pt")
+
+    def fetch_full_transcript(meeting_id):
+        doc = collection.find_one({'_id': meeting_id})
+        full_transcript = []
+
+        if doc is None:
+            return full_transcript
+
+        for user_id, user_transcript in doc['attendees'].items():
+            logging.info(f"\n {user_id} \n")
+            logging.info(len(user_transcript['transcript']))
+            transcript = ' '.join(user_transcript['transcript'])
+            logging.info(transcript)
+            full_transcript.append(transcript)
+            logging.info("\n\n\n")
+
+        return full_transcript
+
+    full_transcript = fetch_full_transcript(meeting_id)
+    inputs = summarizer_tokenizer([' '.join(full_transcript)], max_length=1024, return_tensors="pt")
     summary_ids = summarizer_model.generate(inputs["input_ids"], num_beams=2, min_length=0)
     logging.info ("\n\n Generating Summary \n")
     summary_output = \
