@@ -4,6 +4,8 @@ from fastapi.templating import Jinja2Templates
 from typing import Dict, Callable
 from deepgram import Deepgram
 from dotenv import load_dotenv
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import logging
 import os
 import pymongo
 from bson.objectid import ObjectId
@@ -14,7 +16,6 @@ MONGO_CONFIG = {
     'database': "pipelines_data_v1",
     'user': "root",
     'password': os.environ['MONGO_PASSWORD']
-             
 }
 
 url = f"mongodb://{MONGO_CONFIG['user']}:{MONGO_CONFIG['password']}@{MONGO_CONFIG['host']}:{MONGO_CONFIG['port']}"
@@ -29,6 +30,10 @@ meeting_url="http://www.phoneix-hackathon-meet"
 dg_client = Deepgram("ed2d63ab2b994f422a729422c073622d7a1c6b91")
 
 templates = Jinja2Templates(directory="templates")
+
+logging.config.fileConfig('config/logging.conf', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
+
 
 async def process_audio(fast_socket: WebSocket):
     async def get_transcript(data: Dict) -> None:
@@ -51,6 +56,7 @@ async def process_audio(fast_socket: WebSocket):
 
     return deepgram_socket
 
+
 async def connect_to_deepgram(transcript_received_handler: Callable[[Dict], None]):
     try:
         socket = await dg_client.transcription.live({'punctuate': True, 'interim_results': False})
@@ -60,10 +66,12 @@ async def connect_to_deepgram(transcript_received_handler: Callable[[Dict], None
         return socket
     except Exception as e:
         raise Exception(f'Could not open socket: {e}')
- 
+
+
 @app.get("/", response_class=HTMLResponse)
 def get(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
 
 @app.websocket("/listen")
 async def websocket_endpoint(websocket: WebSocket):
@@ -78,4 +86,40 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         await websocket.close()
 
-    
+
+@app.get("/process_meeting")
+def generate_meeting_insights(request: Request):
+    meeting_insights = {}
+
+    summarizer_tokenizer = AutoTokenizer.from_pretrained("slauw87/bart_summarisation")
+    summarizer_model = AutoModelForSeq2SeqLM.from_pretrained("slauw87/bart_summarisation")
+
+    f = open('config/interview_transcript_1.txt', 'r')
+    inputs = summarizer_tokenizer([f.read()], max_length=1024, return_tensors="pt")
+    summary_ids = summarizer_model.generate(inputs["input_ids"], num_beams=2, min_length=0)
+    logging.info ("\n\n Generating Summary \n")
+    summary_output = \
+        summarizer_tokenizer.batch_decode(summary_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    logging.info (f"\n {summary_output} \n\n")
+    meeting_insights["summary"] = summary_output
+
+    qa_tokenizer = AutoTokenizer.from_pretrained("MaRiOrOsSi/t5-base-finetuned-question-answering")
+    qa_model = AutoModelForSeq2SeqLM.from_pretrained("MaRiOrOsSi/t5-base-finetuned-question-answering")
+
+    meeting_insights["insights"] = []
+    for question in open('config/recruitment_questions.txt', 'r').read().split('\n'):
+        if not question:
+            continue
+
+        qa_input = f"question: {question} context: {summary_output}"
+
+        encoded_input = qa_tokenizer([qa_input], return_tensors='pt', max_length=512, truncation=True)
+        output = qa_model.generate(input_ids=encoded_input.input_ids, attention_mask=encoded_input.attention_mask)
+        output = qa_tokenizer.decode(output[0], skip_special_tokens=True)
+
+        if output:
+            logging.info(qa_input)
+            logging.info(f"\n\n {output} \n\n")
+            meeting_insights["insights"].append( {"question": question, "insight": output} )
+
+    return {"message": meeting_insights}
