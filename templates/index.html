@@ -6,11 +6,20 @@
     <body>
         <h1>Phoenix Conversational Intelligence</h1>
         <p id="status">Connection status will go here</p>
+        <form id="form1">
+            <label>User ID: <input type="text" id="userId" autocomplete="off" /></label>
+            <button type="submit">Send</button>
+        </form>
+        <!-- <button id="get-access">Get access to mic</button> -->
         <p id="transcript"></p>
-
-        <script>
-
+        <p id="demo"></p>
+        
+        <script>   
+            form = document.getElementById('form1')
+            form.addEventListener('submit', async (e) => {
+            e.preventDefault();
             navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+                
             if (!MediaRecorder.isTypeSupported('audio/webm'))
                 return alert('Browser not supported')
 
@@ -18,7 +27,13 @@
                 mimeType: 'audio/webm',
             })
 
-            const socket = new WebSocket('ws://localhost:8000/listen')
+            var user_id = document.getElementById("userId").value
+            document.querySelector('#demo').textContent = user_id
+            var socket=null
+            if(user_id){
+                 socket = new WebSocket(`ws://localhost:8000/listen?user_id=${user_id}`)
+            }
+            
 
             socket.onopen = () => {
                 document.querySelector('#status').textContent = 'Connected'
@@ -26,7 +41,7 @@
 
                 mediaRecorder.addEventListener('dataavailable', async (event) => {
                     if (event.data.size > 0 && socket.readyState == 1) {
-                        socket.send(event.data)
+                            socket.send(event.data)    
                     }
             })
             mediaRecorder.start(250)
@@ -35,6 +50,12 @@
             socket.onmessage = (message) => {
                 const received = message.data
                 if (received) {
+                    
+                    // var device_id = stream.getAudioTracks()[0].id
+                    // var attribute_name="attendees."+device_id+".transcript"
+                    // var newvalues = { $push: {}}
+                    // newvalues["$push"][attribute_name]=received
+                    // document.querySelector('#demo').textContent =  JSON.stringify(newvalues)
                     console.log(received)
                     document.querySelector('#transcript').textContent += ' ' + received
                 }
@@ -49,6 +70,8 @@
             }
 
            })
+
+        })
         
         </script>
     </body>

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, WebSocket,Form
+from fastapi import FastAPI, Request, WebSocket,Form,Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from typing import Dict, Callable
@@ -30,21 +30,20 @@ dg_client = Deepgram("ed2d63ab2b994f422a729422c073622d7a1c6b91")
 
 templates = Jinja2Templates(directory="templates")
 
-async def process_audio(fast_socket: WebSocket):
+async def process_audio(fast_socket: WebSocket,user_id: str):
     async def get_transcript(data: Dict) -> None:
         if 'channel' in data:
             transcript = data['channel']['alternatives'][0]['transcript']
         
             if transcript:
-                user_name="abhas"
-                if user_name:
+                if user_id:
                     collection.update_one({
                                             '_id' : meeting_url
                                                     },{
-                                            '$push' : {f"attendees.{user_name}.transcript": transcript}  
+                                            '$push' : {f"attendees.{user_id}.transcript": transcript}  
                                         }, True)
 
-                    print(f"meeting_url:{meeting_url}",{"attendees":{f"{user_name}":{"transcript":transcript}}})
+                    print(f"meeting_url:{meeting_url}",{"attendees":{f"{user_id}":{"transcript":transcript}}})
                 await fast_socket.send_text(transcript)
 
     deepgram_socket = await connect_to_deepgram(get_transcript)
@@ -66,10 +65,11 @@ def get(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.websocket("/listen")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket,user_id:str = Query(...)):
     await websocket.accept()
+    print(f"user id is : {user_id}")
     try:
-        deepgram_socket = await process_audio(websocket) 
+        deepgram_socket = await process_audio(websocket,user_id) 
         while True:
             data = await websocket.receive_bytes()
             deepgram_socket.send(data)
