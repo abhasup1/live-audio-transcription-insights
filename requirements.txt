@@ -51,7 +51,7 @@ nvidia-cudnn-cu11==8.5.0.96
 packaging==21.3
 pathy==0.10.0
 preshed==3.0.8
-protobuf==4.21.9
+protobuf==3.20.*
 pydantic==1.10.2
 pydub==0.25.1
 pyparsing==3.0.9

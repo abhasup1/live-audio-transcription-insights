@@ -7,21 +7,21 @@ from dotenv import load_dotenv
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import logging
 import os
-# import pymongo
-# from bson.objectid import ObjectId
+import pymongo
+from bson.objectid import ObjectId
 
-# MONGO_CONFIG = {
-#     'host': "mongodb-pipelines.pipelines",
-#     'port': 27017,
-#     'database': "pipelines_data_v1",
-#     'user': "root",
-#     'password': os.environ['MONGO_PASSWORD']
-# }
+MONGO_CONFIG = {
+    'host': "mongodb-pipelines.pipelines",
+    'port': 27017,
+    'database': "pipelines_data_v1",
+    'user': "root",
+    'password': os.environ['MONGO_PASSWORD']
+}
 
-# url = f"mongodb://{MONGO_CONFIG['user']}:{MONGO_CONFIG['password']}@{MONGO_CONFIG['host']}:{MONGO_CONFIG['port']}"
-# client = pymongo.MongoClient(url)
-# pipelines_db = client[MONGO_CONFIG["database"]]
-# collection = pipelines_db['phoenix_conversational_intelligence']
+url = f"mongodb://{MONGO_CONFIG['user']}:{MONGO_CONFIG['password']}@{MONGO_CONFIG['host']}:{MONGO_CONFIG['port']}"
+client = pymongo.MongoClient(url)
+pipelines_db = client[MONGO_CONFIG["database"]]
+collection = pipelines_db['phoenix_conversational_intelligence']
 
 load_dotenv()
 
@@ -41,11 +41,11 @@ async def process_audio(fast_socket: WebSocket, user_id: str,meet_id:str):
         
             if transcript:
                 if user_id:
-                    # collection.update_one({
-                    #                         '_id' : meet_id
-                    #                                 },{
-                    #                         '$push' : {f"attendees.{user_id}.transcript": transcript}  
-                    #                     }, True)
+                    collection.update_one({
+                                            '_id' : meet_id
+                                                    },{
+                                            '$push' : {f"attendees.{user_id}.transcript": transcript}  
+                                        }, True)
 
                     print(f"meeting_url:{meet_id}",{"attendees":{f"{user_id}":{"transcript":transcript}}})
                 await fast_socket.send_text(transcript)
@@ -94,8 +94,8 @@ async def websocket_endpoint(websocket: WebSocket,
         await websocket.close()
 
 
-@app.get("/process_meeting/")
-def generate_meeting_insights(meeting_id):
+@app.get("/process_meeting")
+def generate_meeting_insights(meeting_id:str = Query(...)):
     meeting_insights = {}
 
     summarizer_tokenizer = AutoTokenizer.from_pretrained("slauw87/bart_summarisation")

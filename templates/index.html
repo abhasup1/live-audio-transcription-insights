@@ -9,27 +9,22 @@
         <form id="form1">
             <label>User ID: <input type="text" id="userId" autocomplete="off" /></label>
             <label>Meeting Url: <input type="text" id="meetId" autocomplete="off" /></label>
-            <button onclick="test()">Generate Insights</button>
-            <button type="submit">Send</button>
-            
+            <button type="submit">Connect</button>
+            <hr>
+            <button onclick="getInsights()">Generate Insights</button>          
         </form>
-        
-        <!-- <form action="/testMe" method="get" id="form2">
-            <button type="submit">Generate Insights</button>
-        </form> -->
-        
+   
         <p id="transcript"></p>
         <p id="demo"></p>
         <p id="insights"><b>Insights info</b></p>
         
         <script>  
-            // document.querySelector("#demo1").textContent="test wrong turn"
 
-            function test(){
+            function getInsights(){
                 
                 var xmlHttpReq = new XMLHttpRequest();
                 var meet_id=document.getElementById("meetId").value
-                xmlHttpReq.open("GET", `http://localhost:8000/testMe?meet_id=${meet_id}`, false); 
+                xmlHttpReq.open("GET", `http://localhost:8000/process_meeting?meeting_id=${meet_id}`, false); 
                 xmlHttpReq.send(null);
                 document.querySelector("#insights").textContent=xmlHttpReq.responseText
             }
@@ -73,12 +68,6 @@
             socket.onmessage = (message) => {
                 const received = message.data
                 if (received) {
-                    
-                    // var device_id = stream.getAudioTracks()[0].id
-                    // var attribute_name="attendees."+device_id+".transcript"
-                    // var newvalues = { $push: {}}
-                    // newvalues["$push"][attribute_name]=received
-                    // document.querySelector('#demo').textContent =  JSON.stringify(newvalues)
                     console.log(received)
                     document.querySelector('#transcript').textContent += ' ' + received
                 }
@@ -93,17 +82,6 @@
             }
 
            })
-
-            
-        //    document.querySelector('#gen-insights').addEventListener('click', async (e) => { 
-        //         docment.querySelector("#demo1").textContent="wrongturn"
-        //         // let xmlHttpReq = new XMLHttpRequest();
-        //         // var meet_id=document.getElementById("meetId").value
-        //         // xmlHttpReq.open("GET", `http://localhost:8000/testMe?meet_id=${meet_id}`, false); 
-        //         // xmlHttpReq.send(null);
-        //         // docment.querySelector("#demo1").textContent=xmlHttpReq.responseText.value
-               
-        //     })
 
         })
         
