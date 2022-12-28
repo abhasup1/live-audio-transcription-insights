@@ -27,7 +27,7 @@ collection = pipelines_db['phoenix_conversational_intelligence']
 load_dotenv()
 
 app = FastAPI()
-dg_client = Deepgram("ed2d63ab2b994f422a729422c073622d7a1c6b91")
+dg_client = Deepgram("<enter deepgram key here>")
 
 templates = Jinja2Templates(directory="templates")
 
