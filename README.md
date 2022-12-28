@@ -1,5 +1,13 @@
 # Live Transcription With Python and FastAPI
 
+**What is the repo about?**
+
+This repo receives audio input from user's microphone and transcribes it live. There is also an option to generate 
+insights from that transcription. As of now it provides insights for 1 specific use case : HR interview but is extensible
+to provide insights for other domains as well
+
+**How to run locally**
+
 To run this project locally install dependencies first
 
 ```
