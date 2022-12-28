@@ -12,12 +12,11 @@ from bson.objectid import ObjectId
 import time
 
 MONGO_CONFIG = {
-    # 'host': "mongodb-pipelines.pipelines",
     'host': 'localhost',
     'port': 27017,
-    'database': "pipelines_data_v1",
-    'user': "root",
-    'password': os.environ.get('MONGO_PASSWORD') or "fifkubBEJEVUxytg"
+    'database': os.environ.get("DB_NAME"),
+    'user': os.environ.get("USER"),
+    'password': os.environ.get('MONGO_PASSWORD')
 }
 
 url = f"mongodb://{MONGO_CONFIG['user']}:{MONGO_CONFIG['password']}@{MONGO_CONFIG['host']}:{MONGO_CONFIG['port']}"
