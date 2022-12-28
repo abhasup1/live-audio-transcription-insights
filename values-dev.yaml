@@ -1,7 +1,7 @@
 image:
-  repository: "spoonshotazureregistry.azurecr.io"
-  name: "spoonshot/hackathon_2022"
-  tag: "nov30_v7"
+  repository: "<docker-registry-name>"
+  name: "<repo-name>"
+  tag: "<tag-name>"
 
 scale:
   minCount: 1

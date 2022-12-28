@@ -9,14 +9,15 @@ import logging
 import os
 import pymongo
 from bson.objectid import ObjectId
+import time
 
 MONGO_CONFIG = {
-    'host': "mongodb-pipelines.pipelines",
-    # 'host': 'localhost',
+    # 'host': "mongodb-pipelines.pipelines",
+    'host': 'localhost',
     'port': 27017,
     'database': "pipelines_data_v1",
     'user': "root",
-    'password': os.environ.get('MONGO_PASSWORD')
+    'password': os.environ.get('MONGO_PASSWORD') or "fifkubBEJEVUxytg"
 }
 
 url = f"mongodb://{MONGO_CONFIG['user']}:{MONGO_CONFIG['password']}@{MONGO_CONFIG['host']}:{MONGO_CONFIG['port']}"
@@ -72,11 +73,6 @@ def get(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-@app.get("/testMe")
-def calc(request:Request,meet_id:str = Query(...)):
-    print(f"meeting id from insights {meet_id}")
-    return "I have executed calc"
-    # return templates.TemplateResponse("index.html", {"request": request})
 
 @app.websocket("/listen")
 async def websocket_endpoint(websocket: WebSocket,
@@ -84,19 +80,27 @@ async def websocket_endpoint(websocket: WebSocket,
                              meet_id:str = Query(...)):
     await websocket.accept()
     logging.info(f"user id is : {user_id} and meeting_id is {meet_id}")
-    try:
-        deepgram_socket = await process_audio(websocket,user_id,meet_id) 
-        while True:
-            data = await websocket.receive_bytes()
-            deepgram_socket.send(data)
-    except Exception as e:
-        raise Exception(f'Could not process audio: {e}')
-    finally:
-        await websocket.close()
+    
+    for excp_ctr in range(0,6):
+        try:
+            deepgram_socket = await process_audio(websocket,user_id,meet_id) 
+            while True:
+                data = await websocket.receive_bytes()
+                deepgram_socket.send(data)
+        except Exception as e:
+            if excp_ctr==5:
+                raise Exception(f'Could not process audio: {e}')
+        finally:
+            if excp_ctr==5:
+                await websocket.close()
+        logging.info("retrying without raising excewption")
+        time.sleep(2)
 
 
 @app.get("/process_meeting")
 def generate_meeting_insights(meeting_id:str = Query(...)):
+    doc = collection.find_one({'_id': meeting_id})['attendees']
+
     meeting_insights = {}
 
     summarizer_tokenizer = AutoTokenizer.from_pretrained("slauw87/bart_summarisation")
